@@ -65,7 +65,7 @@ public class NewsService {
     
     public Page<News> getNewsBySportPaginated(String sportCode, Pageable pageable) {
         Optional<Sport> sport = sportService.findByCode(sportCode);
-        return sport.map(newsRepository::findBySportOrderByPublishedAtDesc)
+        return sport.map(s -> newsRepository.findBySportOrderByPublishedAtDesc(s, pageable))
                    .orElse(Page.empty(pageable));
     }
     

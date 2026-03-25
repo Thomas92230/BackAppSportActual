@@ -3,6 +3,7 @@ package com.actuSport.application.service;
 import com.actuSport.domain.model.Match;
 import com.actuSport.domain.model.News;
 import com.actuSport.infrastructure.websocket.LiveMatchController;
+import com.actuSport.infrastructure.aws.AwsSnsService; // Added import
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
