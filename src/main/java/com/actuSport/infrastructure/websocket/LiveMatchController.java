@@ -4,6 +4,7 @@ import com.actuSport.domain.model.Match;
 import com.actuSport.application.service.MatchService;
 import com.actuSport.application.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,9 +19,11 @@ public class LiveMatchController {
     private SimpMessagingTemplate messagingTemplate;
     
     @Autowired
+    @Lazy
     private MatchService matchService;
     
     @Autowired
+    @Lazy
     private NotificationService notificationService;
     
     @MessageMapping("/subscribe/matches")

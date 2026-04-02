@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -55,7 +56,7 @@ public class SportService {
     }
     
     private String capitalizeSportName(String sportCode) {
-        switch (sportCode.toLowerCase()) {
+        switch (sportCode.toLowerCase(Locale.ROOT)) {
             case "football": return "Football";
             case "basketball": return "Basketball";
             case "tennis": return "Tennis";
@@ -65,7 +66,7 @@ public class SportService {
             case "formula1": return "Formule 1";
             case "judo": return "Judo";
             case "swimming": return "Natation";
-            default: return sportCode.substring(0, 1).toUpperCase() + sportCode.substring(1);
+            default: return sportCode.substring(0, 1).toUpperCase(Locale.ROOT) + sportCode.substring(1);
         }
     }
     

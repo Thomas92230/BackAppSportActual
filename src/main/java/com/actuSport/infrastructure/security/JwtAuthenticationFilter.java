@@ -1,5 +1,7 @@
 package com.actuSport.infrastructure.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,8 +39,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 username = jwtTokenUtil.getUsernameFromToken(jwtToken);
-            } catch (Exception e) {
-                logger.warn("Unable to get JWT Token");
+            } catch (ExpiredJwtException e) {
+                logger.warn("JWT Token expired");
+            } catch (JwtException e) {
+                logger.warn("Invalid JWT Token");
             }
         } else {
             logger.debug("JWT Token does not begin with Bearer String");

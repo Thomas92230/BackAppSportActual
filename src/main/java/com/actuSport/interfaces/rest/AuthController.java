@@ -1,9 +1,11 @@
 package com.actuSport.interfaces.rest;
 
 import com.actuSport.infrastructure.security.JwtTokenUtil;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -48,7 +50,7 @@ public class AuthController {
             
             return ResponseEntity.ok(response);
             
-        } catch (Exception e) {
+        } catch (BadCredentialsException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Authentication failed");
             error.put("message", "Invalid username or password");
@@ -76,7 +78,7 @@ public class AuthController {
                 return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
             }
             
-        } catch (Exception e) {
+        } catch (JwtException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Token refresh failed"));
         }
     }
@@ -94,7 +96,7 @@ public class AuthController {
                 return ResponseEntity.status(401).body(Map.of("valid", false));
             }
             
-        } catch (Exception e) {
+        } catch (JwtException e) {
             return ResponseEntity.status(401).body(Map.of("valid", false, "error", "Token validation failed"));
         }
     }

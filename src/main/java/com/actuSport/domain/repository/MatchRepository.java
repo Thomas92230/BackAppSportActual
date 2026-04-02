@@ -23,7 +23,8 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     
     List<Match> findByHomeTeamOrAwayTeam(Team homeTeam, Team awayTeam);
     
-    List<Match> findByCompetition(Sport sport, String competition);
+    // Correction: Renommé pour être explicite sur le filtrage par le code de la compétition
+    List<Match> findBySportAndCompetition_Code(Sport sport, String competitionCode);
     
     @Query("SELECT m FROM Match m WHERE m.sport = :sport AND m.matchDate BETWEEN :startDate AND :endDate")
     List<Match> findBySportAndDateRange(@Param("sport") Sport sport, 

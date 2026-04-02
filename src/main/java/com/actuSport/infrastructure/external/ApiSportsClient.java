@@ -4,14 +4,15 @@ import com.actuSport.domain.model.Match;
 import com.actuSport.domain.model.News;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ApiSportsClient {
@@ -29,54 +30,33 @@ public class ApiSportsClient {
     }
     
     public List<Match> getLiveMatches(String sport) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/v3/fixtures")
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/fixtures")
                 .queryParam("live", "all")
-                .queryParam("sport", sport)
-                .build()
-                .toUriString();
-        
-        ApiSportsResponse response = restTemplate.getForObject(
-            addApiKey(url), 
-            ApiSportsResponse.class
-        );
-        
+                .build().toUriString();
+        ApiSportsResponse response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers()), ApiSportsResponse.class).getBody();
         return response != null ? response.getMatches() : List.of();
     }
-    
+
     public List<Match> getMatchesByDate(String sport, LocalDateTime date) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/v3/fixtures")
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/fixtures")
                 .queryParam("date", date.toLocalDate())
-                .queryParam("sport", sport)
-                .build()
-                .toUriString();
-        
-        ApiSportsResponse response = restTemplate.getForObject(
-            addApiKey(url), 
-            ApiSportsResponse.class
-        );
-        
+                .build().toUriString();
+        ApiSportsResponse response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers()), ApiSportsResponse.class).getBody();
         return response != null ? response.getMatches() : List.of();
     }
-    
+
     public List<News> getSportsNews(String sport) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/v3/news")
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/news")
                 .queryParam("sport", sport)
-                .build()
-                .toUriString();
-        
-        ApiSportsNewsResponse response = restTemplate.getForObject(
-            addApiKey(url), 
-            ApiSportsNewsResponse.class
-        );
-        
+                .build().toUriString();
+        ApiSportsNewsResponse response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers()), ApiSportsNewsResponse.class).getBody();
         return response != null ? response.getNews() : List.of();
     }
-    
-    private String addApiKey(String url) {
-        return UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("apikey", apiKey)
-                .build()
-                .toUriString();
+
+    private HttpHeaders headers() {
+        HttpHeaders h = new HttpHeaders();
+        h.set("x-apisports-key", apiKey);
+        return h;
     }
     
     public static class ApiSportsResponse {

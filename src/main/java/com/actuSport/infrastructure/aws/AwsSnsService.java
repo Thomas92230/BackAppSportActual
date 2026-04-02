@@ -2,6 +2,7 @@ package com.actuSport.infrastructure.aws;
 
 import com.actuSport.application.service.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
+import software.amazon.awssdk.services.sns.model.SnsException;
 
 @Service
 public class AwsSnsService {
@@ -41,7 +43,10 @@ public class AwsSnsService {
             
             logger.info("SNS notification sent successfully. MessageId: {}", response.messageId());
             
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize SNS notification", e);
+            throw new RuntimeException("Failed to serialize notification", e);
+        } catch (SnsException e) {
             logger.error("Failed to send SNS notification", e);
             throw new RuntimeException("Failed to send notification", e);
         }
@@ -59,7 +64,7 @@ public class AwsSnsService {
             
             logger.info("Simple SNS notification sent. MessageId: {}", response.messageId());
             
-        } catch (Exception e) {
+        } catch (SnsException e) {
             logger.error("Failed to send simple SNS notification", e);
             throw new RuntimeException("Failed to send notification", e);
         }

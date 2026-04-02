@@ -1,15 +1,19 @@
-FROM openjdk:21-jdk-slim
-
+FROM eclipse-temurin:21-jdk-jammy
 LABEL maintainer="SportActual Team"
 
 WORKDIR /app
 
-COPY target/ActuSportBack-*.jar app.jar
+# Copie du JAR généré par Maven
+COPY target/*.jar app.jar
 
+# Expose le port Spring Boot
 EXPOSE 8080
 
+# Options JVM
 ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC"
 
-ENV SPRING_PROFILES_ACTIVE=prod
+# Profil Spring actif (Docker Compose peut override)
+ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+# Lancement de l'application
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar app.jar"]

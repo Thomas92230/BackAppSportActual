@@ -28,3 +28,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### SSL - Ne jamais committer les clés privées ###
+ssl/*.key
+ssl/*.pem
+.env

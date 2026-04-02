@@ -3,10 +3,12 @@ package com.actuSport.application.service;
 import com.actuSport.domain.model.Match;
 import com.actuSport.domain.model.News;
 import com.actuSport.infrastructure.websocket.LiveMatchController;
-import com.actuSport.infrastructure.aws.AwsSnsService; // Added import
+import com.actuSport.infrastructure.aws.AwsSnsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +22,14 @@ public class NotificationService {
     private static final String NOTIFICATION_PREFIX = "notification:";
     private static final String USER_NOTIFICATIONS_PREFIX = "user_notifications:";
     
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
     
     @Autowired
+    @Lazy
     private LiveMatchController liveMatchController;
     
-    @Autowired
+    @Autowired(required = false)
     private AwsSnsService awsSnsService;
     
     public void notifyMatchStarted(Match match) {
@@ -82,28 +85,45 @@ public class NotificationService {
         notification.setMatchId(matchId);
         notification.setTimestamp(LocalDateTime.now());
         
-        String notificationKey = NOTIFICATION_PREFIX + sportCode;
-        redisTemplate.opsForList().leftPush(notificationKey, notification);
-        redisTemplate.expire(notificationKey, 24, TimeUnit.HOURS);
+        // Redis est optionnel
+        if (redisTemplate != null) {
+            try {
+                String notificationKey = NOTIFICATION_PREFIX + sportCode;
+                redisTemplate.opsForList().leftPush(notificationKey, notification);
+                redisTemplate.expire(notificationKey, 24, TimeUnit.HOURS);
+            } catch (RedisConnectionFailureException e) {
+                logger.error("Failed to save notification to Redis", e);
+            }
+        }
         
-        liveMatchController.broadcastNotification(notification);
+        // WebSocket broadcast
+        if (liveMatchController != null) {
+            liveMatchController.broadcastNotification(notification);
+        }
         
-        try {
-            awsSnsService.sendNotification(notification);
-        } catch (Exception e) {
-            logger.error("Failed to send AWS SNS notification", e);
+        // AWS SNS est optionnel
+        if (awsSnsService != null) {
+            try {
+                awsSnsService.sendNotification(notification);
+            } catch (RuntimeException e) {
+                logger.error("Failed to send AWS SNS notification", e);
+            }
         }
     }
     
     public void subscribeUserToSport(String userId, String sportCode) {
-        String key = USER_NOTIFICATIONS_PREFIX + userId;
-        redisTemplate.opsForSet().add(key, sportCode);
-        redisTemplate.expire(key, 30, TimeUnit.DAYS);
+        if (redisTemplate != null) {
+            String key = USER_NOTIFICATIONS_PREFIX + userId;
+            redisTemplate.opsForSet().add(key, sportCode);
+            redisTemplate.expire(key, 30, TimeUnit.DAYS);
+        }
     }
     
     public void unsubscribeUserFromSport(String userId, String sportCode) {
-        String key = USER_NOTIFICATIONS_PREFIX + userId;
-        redisTemplate.opsForSet().remove(key, sportCode);
+        if (redisTemplate != null) {
+            String key = USER_NOTIFICATIONS_PREFIX + userId;
+            redisTemplate.opsForSet().remove(key, sportCode);
+        }
     }
     
     public static class Notification {

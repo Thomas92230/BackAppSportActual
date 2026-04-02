@@ -7,9 +7,11 @@ import com.actuSport.infrastructure.external.ApiSportsClient;
 import com.actuSport.infrastructure.external.EspnClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +48,9 @@ public class SportDataSyncService {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {
                 syncLiveMatchesForSport(sport);
-            } catch (Exception e) {
+            } catch (HttpClientErrorException e) {
+                logger.error("HTTP error syncing live matches for sport: {}, status: {}", sport, e.getStatusCode(), e);
+            } catch (RestClientException e) {
                 logger.error("Error syncing live matches for sport: {}", sport, e);
             }
         });
@@ -57,7 +61,9 @@ public class SportDataSyncService {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {
                 syncNewsForSport(sport);
-            } catch (Exception e) {
+            } catch (HttpClientErrorException e) {
+                logger.error("HTTP error syncing news for sport: {}, status: {}", sport, e.getStatusCode(), e);
+            } catch (RestClientException e) {
                 logger.error("Error syncing news for sport: {}", sport, e);
             }
         });
