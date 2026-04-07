@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -121,7 +122,77 @@ public class NewsService {
                   .orElse(List.of());
     }
     
+    public List<News> advancedSearch(String keyword, String source, String author, String sportCode, String sortBy) {
+        List<News> results = newsRepository.findAll();
+        
+        // Filtrer par mot-clé
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String lowerKeyword = keyword.toLowerCase();
+            results = results.stream()
+                    .filter(news -> 
+                        (news.getTitle() != null && news.getTitle().toLowerCase().contains(lowerKeyword)) ||
+                        (news.getContent() != null && news.getContent().toLowerCase().contains(lowerKeyword)) ||
+                        (news.getSummary() != null && news.getSummary().toLowerCase().contains(lowerKeyword)))
+                    .collect(Collectors.toList());
+        }
+        
+        // Filtrer par source
+        if (source != null && !source.trim().isEmpty()) {
+            results = results.stream()
+                    .filter(news -> news.getSource() != null && news.getSource().toLowerCase().contains(source.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+        
+        // Filtrer par auteur
+        if (author != null && !author.trim().isEmpty()) {
+            results = results.stream()
+                    .filter(news -> news.getAuthor() != null && news.getAuthor().toLowerCase().contains(author.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+        
+        // Filtrer par sport
+        if (sportCode != null && !sportCode.trim().isEmpty()) {
+            Optional<Sport> sport = sportService.findByCode(sportCode);
+            if (sport.isPresent()) {
+                results = results.stream()
+                        .filter(news -> sport.equals(news.getSport()))
+                        .collect(Collectors.toList());
+            }
+        }
+        
+        // Trier les résultats
+        switch (sortBy) {
+            case "publishedAt":
+                results = results.stream()
+                        .sorted((a, b) -> b.getPublishedAt().compareTo(a.getPublishedAt()))
+                        .collect(Collectors.toList());
+                break;
+            case "title":
+                results = results.stream()
+                        .sorted((a, b) -> a.getTitle().compareToIgnoreCase(b.getTitle()))
+                        .collect(Collectors.toList());
+                break;
+            case "source":
+                results = results.stream()
+                        .sorted((a, b) -> a.getSource().compareToIgnoreCase(b.getSource()))
+                        .collect(Collectors.toList());
+                break;
+            default:
+                // Garder l'ordre par défaut (publishedAt)
+                break;
+        }
+        
+        logger.info("Advanced search returned {} results (keyword={}, source={}, author={}, sport={}, sortBy={})", 
+                   results.size(), keyword, source, author, sportCode, sortBy);
+        return results;
+    }
+    
     public void deleteNews(Long id) {
         newsRepository.deleteById(id);
+    }
+    
+    public void deleteAllNews() {
+        logger.info("Deleting all news articles from database");
+        newsRepository.deleteAll();
     }
 }

@@ -2,20 +2,17 @@ package com.actuSport.application.service;
 
 import com.actuSport.domain.model.Match;
 import com.actuSport.domain.model.News;
-import com.actuSport.domain.model.Sport;
 import com.actuSport.infrastructure.external.ApiSportsClient;
-import com.actuSport.infrastructure.external.EspnClient;
+import com.actuSport.infrastructure.external.NewsApiClient;
+import com.actuSport.infrastructure.external.MockNewsClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class SportDataSyncService {
@@ -23,79 +20,122 @@ public class SportDataSyncService {
     private static final Logger logger = LoggerFactory.getLogger(SportDataSyncService.class);
     
     private final ApiSportsClient apiSportsClient;
-    private final EspnClient espnClient;
+    private final NewsApiClient newsApiClient;
+    private final MockNewsClient mockNewsClient;
     private final MatchService matchService;
     private final NewsService newsService;
-    private final SportService sportService;
     
     private final List<String> SUPPORTED_SPORTS = Arrays.asList(
-        "football", "basketball", "tennis", "hockey", 
-        "rugby", "cycling", "formula1", "judo", "swimming"
+        "soccer", "basketball", "tennis", "hockey", 
+        "rugby", "cycling", "f1", "judo", "swimming"
     );
     
-    public SportDataSyncService(ApiSportsClient apiSportsClient, EspnClient espnClient,
-                               MatchService matchService, NewsService newsService,
-                               SportService sportService) {
+    public SportDataSyncService(ApiSportsClient apiSportsClient, NewsApiClient newsApiClient,
+                               MockNewsClient mockNewsClient, MatchService matchService, NewsService newsService) {
         this.apiSportsClient = apiSportsClient;
-        this.espnClient = espnClient;
+        this.newsApiClient = newsApiClient;
+        this.mockNewsClient = mockNewsClient;
         this.matchService = matchService;
         this.newsService = newsService;
-        this.sportService = sportService;
     }
     
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 600000) // Toutes les 10 minutes
     public void syncLiveMatches() {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {
                 syncLiveMatchesForSport(sport);
-            } catch (HttpClientErrorException e) {
-                logger.error("HTTP error syncing live matches for sport: {}, status: {}", sport, e.getStatusCode(), e);
-            } catch (RestClientException e) {
+            } catch (Exception e) {
                 logger.error("Error syncing live matches for sport: {}", sport, e);
             }
         });
     }
     
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 3600000) // Toutes les heures
     public void syncNews() {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {
                 syncNewsForSport(sport);
-            } catch (HttpClientErrorException e) {
-                logger.error("HTTP error syncing news for sport: {}, status: {}", sport, e.getStatusCode(), e);
-            } catch (RestClientException e) {
+            } catch (Exception e) {
                 logger.error("Error syncing news for sport: {}", sport, e);
             }
         });
     }
     
-    @Async
-    public CompletableFuture<Void> syncAllData() {
-        return CompletableFuture.runAsync(() -> {
-            syncLiveMatches();
-            syncNews();
-        });
-    }
-    
-    private void syncLiveMatchesForSport(String sport) {
+    public void syncLiveMatchesForSport(String sport) {
         List<Match> apiSportsMatches = apiSportsClient.getLiveMatches(sport);
-        List<Match> espnMatches = espnClient.getLiveMatches(sport);
-        
         matchService.updateMatches(apiSportsMatches);
-        matchService.updateMatches(espnMatches);
+        logger.info("Synced {} live matches for sport: {}", apiSportsMatches.size(), sport);
+    }
+
+    public void syncNewsForSport(String sport) {
+        // Utilisation de NewsAPI pour les vraies actualités sportives
+        List<News> news = newsApiClient.getSportsNews(sport);
         
-        logger.info("Synced {} live matches for sport: {}", 
-                   apiSportsMatches.size() + espnMatches.size(), sport);
+        if (news != null && !news.isEmpty()) {
+            newsService.updateNews(news);
+            logger.info("Synced {} news articles from NewsAPI for sport: {}", news.size(), sport);
+        } else {
+            logger.warn("No news found on NewsAPI for sport: {}", sport);
+        }
     }
     
-    private void syncNewsForSport(String sport) {
-        List<News> apiSportsNews = apiSportsClient.getSportsNews(sport);
-        List<News> espnNews = espnClient.getSportsNews(sport);
+    public void createRecentTestArticles() {
+        logger.info("Creating recent test articles for demonstration");
         
-        newsService.updateNews(apiSportsNews);
-        newsService.updateNews(espnNews);
+        // Créer quelques articles récents avec des dates actuelles
+        List<News> recentArticles = Arrays.asList(
+            createRecentArticle(
+                "Victoire historique en Ligue des Champions",
+                "Le club français remporte la Ligue des Champions après une finale épique contre les géants européens. Une performance légendaire qui marquera l'histoire.",
+                "Un club français triomphe en Ligue des Champions dans un match mémorable.",
+                "Rédaction SportActual",
+                "L'Équipe",
+                "https://via.placeholder.com/400x200/059669/FFFFFF?text=Champions+League",
+                "https://example.com/news/champions-league-victory"
+            ),
+            createRecentArticle(
+                "Le tennisman français remporte Wimbledon",
+                "Dans une finale spectaculaire, le joueur français s'impose en 5 sets et devient le premier français à remporter Wimbledon depuis 40 ans.",
+                "Un triomphe historique pour le tennis français à Wimbledon.",
+                "Rédaction SportActual", 
+                "Tennis Magazine",
+                "https://via.placeholder.com/400x200/10B981/FFFFFF?text=Wimbledon+Victory",
+                "https://example.com/news/wimbledon-win"
+            ),
+            createRecentArticle(
+                "Nouveau record du monde du 100m",
+                "L'athlète français pulvérise le record du monde du 100m avec un chrono incroyable de 9.58s lors du meeting de Paris.",
+                "Un record du monde historique pour l'athlète français.",
+                "Rédaction SportActual",
+                "Athletics Weekly", 
+                "https://via.placeholder.com/400x200/EF4444/FFFFFF?text=World+Record",
+                "https://example.com/news/world-record-100m"
+            )
+        );
         
-        logger.info("Synced {} news articles for sport: {}", 
-                   apiSportsNews.size() + espnNews.size(), sport);
+        // Sauvegarder les articles
+        for (News article : recentArticles) {
+            try {
+                newsService.saveNews(article);
+                logger.info("Created recent article: {}", article.getTitle());
+            } catch (Exception e) {
+                logger.error("Error creating recent article: {}", article.getTitle(), e);
+            }
+        }
+    }
+    
+    private News createRecentArticle(String title, String content, String summary, 
+                                   String author, String source, String imageUrl, String articleUrl) {
+        News news = new News();
+        news.setTitle(title);
+        news.setContent(content);
+        news.setSummary(summary);
+        news.setAuthor(author);
+        news.setSource(source);
+        news.setImageUrl(imageUrl);
+        news.setArticleUrl(articleUrl);
+        news.setPublishedAt(LocalDateTime.now()); // Date actuelle
+        news.setCreatedAt(LocalDateTime.now());
+        return news;
     }
 }
