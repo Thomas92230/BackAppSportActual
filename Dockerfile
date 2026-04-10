@@ -1,9 +1,10 @@
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jre
 LABEL maintainer="SportActual Team"
 
 WORKDIR /app
 
 # Copie du JAR généré par Maven
+# Assurez-vous d'avoir fait un 'mvn package' avant le 'docker-compose build'
 COPY target/*.jar app.jar
 
 # Expose le port Spring Boot

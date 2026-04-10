@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Images</title>
+</head>
+<body>
+    <h1>Test des images d'articles</h1>
+    
+    <h2>Test 1: Image placeholder direct</h2>
+    <img src="https://via.placeholder.com/400x200/4F46E5/FFFFFF?text=Test+Direct" alt="Test direct" style="border: 1px solid #ccc;">
+    
+    <h2>Test 2: Via proxy (URL encodée)</h2>
+    <img src="http://localhost:8080/api/news/proxy/image?url=https%3A%2F%2Fvia.placeholder.com%2F400x200%2F4F46E5%2FFFFFFF%3Ftext%3DTest+Proxy" alt="Test proxy" style="border: 1px solid #ccc;">
+    
+    <h2>Test 3: API Enhanced News</h2>
+    <div id="news-container">Chargement...</div>
+    
+    <script>
+        // Tester l'API enhanced
+        fetch('http://localhost:8080/api/news/enhanced?page=0&size=3')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('news-container');
+                container.innerHTML = '';
+                
+                data.content.forEach(news => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '20px';
+                    div.style.border = '1px solid #ddd';
+                    div.style.padding = '10px';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = news.title;
+                    div.appendChild(title);
+                    
+                    if (news.imageUrl) {
+                        const img = document.createElement('img');
+                        img.src = news.imageUrl;
+                        img.alt = news.title;
+                        img.style.maxWidth = '300px';
+                        img.style.border = '1px solid #ccc';
+                        img.onerror = function() {
+                            this.style.border = '2px solid red';
+                            this.title = 'Erreur de chargement: ' + this.src;
+                        };
+                        img.onload = function() {
+                            this.style.border = '2px solid green';
+                        };
+                        div.appendChild(img);
+                    }
+                    
+                    container.appendChild(div);
+                });
+            })
+            .catch(error => {
+                document.getElementById('news-container').innerHTML = 
+                    '<p style="color: red;">Erreur: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

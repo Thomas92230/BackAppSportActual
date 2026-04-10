@@ -11,7 +11,7 @@ public class News {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String title;
     
     @Column(columnDefinition = "TEXT")
@@ -20,9 +20,16 @@ public class News {
     @Column(columnDefinition = "TEXT")
     private String summary;
     
+    @Column(length = 200)
     private String author;
+    
+    @Column(length = 200)
     private String source;
+    
+    @Column(length = 1000)
     private String imageUrl;
+    
+    @Column(length = 1000)
     private String articleUrl;
     
     @ManyToOne(fetch = FetchType.LAZY)

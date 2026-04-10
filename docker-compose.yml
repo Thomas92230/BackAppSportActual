@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     environment:
@@ -13,6 +15,9 @@ services:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY:-}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY:-}
+      - API_SPORTS_KEY=${API_SPORTS_KEY:-}
+      - EXTERNAL_API_SPORTS_KEY=${API_SPORTS_KEY:-}
+      - NEWSAPI_KEY=781d8e3f316a4575b5b0ed664deca938
     depends_on:
       - postgres
       - redis

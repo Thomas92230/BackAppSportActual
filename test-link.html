@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test des liens d'articles</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .article { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .article a { color: #007bff; text-decoration: none; }
+        .article a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Test des liens d'articles</h1>
+    <div id="articles">
+        <div class="loading">Chargement...</div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8080/api/news';
+        
+        async function loadArticles() {
+            try {
+                const response = await fetch(`${API_BASE}/enhanced?page=0&size=5`);
+                const data = await response.json();
+                
+                const articles = data.content || [];
+                const container = document.getElementById('articles');
+                
+                container.innerHTML = articles.map(article => `
+                    <div class="article">
+                        <h3>
+                            <a href="article-view.html?id=${article.id}" target="_blank">
+                                ${article.title} (ID: ${article.id})
+                            </a>
+                        </h3>
+                        <p>Source: ${article.source}</p>
+                        <p>Date: ${new Date(article.publishedAt).toLocaleDateString('fr-FR')}</p>
+                        <a href="article-view.html?id=${article.id}" target="_blank">
+                            Lire l'article complet
+                        </a>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('articles').innerHTML = '<p>Erreur de chargement</p>';
+            }
+        }
+        
+        // Charger au démarrage
+        loadArticles();
+    </script>
+</body>
+</html>

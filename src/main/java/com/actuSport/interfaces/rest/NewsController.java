@@ -63,7 +63,22 @@ public class NewsController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<News> newsPage = newsService.getAllNewsPaginated(pageable);
-        return ResponseEntity.ok(newsPage.map(this::toResponse));
+        
+        // Enrichir les images avec le proxy
+        Page<NewsResponse> enrichedNews = newsPage.map(news -> {
+            NewsResponse response = toResponse(news);
+            if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
+                try {
+                    String encodedUrl = java.net.URLEncoder.encode(news.getImageUrl(), java.nio.charset.StandardCharsets.UTF_8);
+                    response.setImageUrl("/api/news/proxy/image?url=" + encodedUrl);
+                } catch (Exception e) {
+                    logger.warn("Error encoding image URL for news {}: {}", news.getId(), news.getImageUrl(), e);
+                }
+            }
+            return response;
+        });
+        
+        return ResponseEntity.ok(enrichedNews);
     }
     
     @GetMapping("/{id}")
@@ -407,6 +422,36 @@ public class NewsController {
             return "image/svg+xml";
         } else {
             return "image/jpeg"; // Par défaut
+        }
+    }
+    
+    @GetMapping("/search-interface.html")
+    public ResponseEntity<String> getSearchInterface() {
+        try {
+            // Lire le fichier HTML depuis les ressources
+            org.springframework.core.io.Resource resource = org.springframework.core.io.ResourceLoader.class.cast(
+                new org.springframework.core.io.DefaultResourceLoader()
+            ).getResource("classpath:/static/search-interface.html");
+            
+            if (resource.exists()) {
+                String content = new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body(content);
+            } else {
+                // Fallback: lire depuis le répertoire racine
+                java.nio.file.Path path = java.nio.file.Paths.get("search-interface.html");
+                if (java.nio.file.Files.exists(path)) {
+                    String content = java.nio.file.Files.readString(path, java.nio.charset.StandardCharsets.UTF_8);
+                    return ResponseEntity.ok()
+                        .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                        .body(content);
+                }
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            logger.error("Error serving search interface", e);
+            return ResponseEntity.status(500).build();
         }
     }
     

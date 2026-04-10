@@ -25,6 +25,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@Profile("!docker") // Ne pas appliquer cette configuration pour le profil docker
 public class SecurityConfig {
     
     @Autowired
@@ -54,6 +55,13 @@ public class SecurityConfig {
                 .requestMatchers("/app/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/search-interface.html").permitAll()
+                .requestMatchers("/test-articles.json").permitAll()
+                .requestMatchers("/test-images.html").permitAll()
+                .requestMatchers("/recent-article.json").permitAll()
+                .requestMatchers("/recent-simple.json").permitAll()
+                .requestMatchers("/static/**", "/public/**", "/resources/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/**").permitAll() // Autoriser tout en mode développement
                 .anyRequest().authenticated()
             );
         

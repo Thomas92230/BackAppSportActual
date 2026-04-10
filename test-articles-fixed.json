@@ -1,0 +1,90 @@
+[
+  {
+    "title": "Victoire ecrasante de l'equipe de France",
+    "content": "L'equipe de France remporte une victoire impressionnante contre son rival dans un match memorables. Les joueurs ont montre une excellente coordination et ont domine tout le match. Cette victoire renforce leur position en tete du classement.",
+    "summary": "L'equipe de France s'impose avec brio et consolide sa premiere place.",
+    "author": "Redaction SportActual",
+    "source": "Reuters",
+    "imageUrl": "https://picsum.photos/seed/france-victory/400/200.jpg",
+    "articleUrl": "https://example.com/news/france-victory",
+    "sportCode": "soccer",
+    "publishedAt": "2026-04-07T18:00:00"
+  },
+  {
+    "title": "Le tennisman francais atteint la finale",
+    "content": "Apres un match marathon de 5 sets, le joueur francais se qualifie pour la finale du tournoi Grand Chelem. Il a montre un mental d'acier et a su surmonter la fatigue pour remporter ce match crucial.",
+    "summary": "Un joueur francais en finale apres un match epique.",
+    "author": "Redaction SportActual",
+    "source": "Tennis Magazine",
+    "imageUrl": "https://picsum.photos/seed/tennis-final/400/200.jpg",
+    "articleUrl": "https://example.com/news/tennis-final",
+    "sportCode": "tennis",
+    "publishedAt": "2026-04-07T16:30:00"
+  },
+  {
+    "title": "Transfert record pour le club parisien",
+    "content": "Le club de la capitale annonce le transfert le plus cher de son histoire. Un joueur international rejoint l'equipe pour renforcer leur effectif en vue des competitions europeennes.",
+    "summary": "Un transfert historique pour le club parisien.",
+    "author": "Redaction SportActual",
+    "source": "L'Equipe",
+    "imageUrl": "https://picsum.photos/seed/transfer-record/400/200.jpg",
+    "articleUrl": "https://example.com/news/transfer-record",
+    "sportCode": "soccer",
+    "publishedAt": "2026-04-07T14:15:00"
+  },
+  {
+    "title": "Le cycliste francais remporte l'etape",
+    "content": "Dans une etape de montagne eprouvante, le cycliste francais a montre sa superiorite en attaquant dans les derniers kilometres pour remporter une victoire importante.",
+    "summary": "Une victoire d'etape impressionnante pour le cycliste francais.",
+    "author": "Redaction SportActual",
+    "source": "Cycling News",
+    "imageUrl": "https://picsum.photos/seed/cycling-win/400/200.jpg",
+    "articleUrl": "https://example.com/news/cycling-win",
+    "sportCode": "cycling",
+    "publishedAt": "2026-04-07T12:45:00"
+  },
+  {
+    "title": "Nouveau record du monde en athletisme",
+    "content": "L'athlete francais a pulverise le record du monde du 100m lors d'un meeting international. Un chrono historique qui entre dans les annales de l'athletisme.",
+    "summary": "Un record du monde historique pour l'athlete francais.",
+    "author": "Redaction SportActual",
+    "source": "Athletics Weekly",
+    "imageUrl": "https://picsum.photos/seed/world-record/400/200.jpg",
+    "articleUrl": "https://example.com/news/world-record",
+    "sportCode": "athletics",
+    "publishedAt": "2026-04-07T10:30:00"
+  },
+  {
+    "title": "Victoire en Formule 1",
+    "content": "Le pilote francais remporte le Grand Prix dans une course dramatique. Une performance exceptionnelle qui lui permet de prendre la tete du championnat.",
+    "summary": "Une victoire spectaculaire en Formule 1.",
+    "author": "Redaction SportActual",
+    "source": "F1 News",
+    "imageUrl": "https://picsum.photos/seed/f1-victory/400/200.jpg",
+    "articleUrl": "https://example.com/news/f1-victory",
+    "sportCode": "f1",
+    "publishedAt": "2026-04-07T09:15:00"
+  },
+  {
+    "title": "Nouveau champion du monde de judo",
+    "content": "Le judoka francais devient champion du monde apres une finale spectaculaire. Une victoire qui couronne des annees d'efforts et de sacrifice.",
+    "summary": "Le judoka francais sacre champion du monde.",
+    "author": "Redaction SportActual",
+    "source": "Judo Inside",
+    "imageUrl": "https://picsum.photos/seed/judo-champion/400/200.jpg",
+    "articleUrl": "https://example.com/news/judo-champion",
+    "sportCode": "judo",
+    "publishedAt": "2026-04-07T08:30:00"
+  },
+  {
+    "title": "Le club francais remporte la Ligue des Champions",
+    "content": "Une victoire historique en finale de la Ligue des Champions. Les joueurs ont montre un jeu exceptionnel tout au long de la competition.",
+    "summary": "Une victoire legendaire en Ligue des Champions.",
+    "author": "Redaction SportActual",
+    "source": "ESPN",
+    "imageUrl": "https://picsum.photos/seed/champions-league/400/200.jpg",
+    "articleUrl": "https://example.com/news/champions-league",
+    "sportCode": "soccer",
+    "publishedAt": "2026-04-07T07:45:00"
+  }
+]
