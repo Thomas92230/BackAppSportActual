@@ -45,7 +45,7 @@ public class SportDataSyncService {
         this.environment = environment;
     }
     
-    @Scheduled(fixedRate = 600000) // Toutes les 10 minutes
+    // @Scheduled(fixedRate = 600000) // Toutes les 10 minutes - DÉSACTIVÉ TEMPORAIREMENT
     public void syncLiveMatches() {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {
@@ -60,15 +60,16 @@ public class SportDataSyncService {
     public void initializeDataOnStartup() {
         logger.info("Application démarrée - Initialisation des données...");
         
-        // Vérifier si nous sommes en mode développement/démonstration
-        String[] activeProfiles = environment.getActiveProfiles();
-        boolean isDevMode = Arrays.asList(activeProfiles).contains("dev") || 
-                          Arrays.asList(activeProfiles).contains("demo") ||
-                          Arrays.asList(activeProfiles).contains("docker");
-        
-        if (isDevMode) {
-            logger.info("Mode développement détecté - Création des articles de démonstration...");
-            try {
+        try {
+            // Vérifier si nous sommes en mode développement/démonstration
+            String[] activeProfiles = environment.getActiveProfiles();
+            boolean isDevMode = Arrays.asList(activeProfiles).contains("dev") || 
+                              Arrays.asList(activeProfiles).contains("demo") ||
+                              Arrays.asList(activeProfiles).contains("docker");
+            
+            if (isDevMode) {
+                logger.info("Mode développement détecté - Création des articles de démonstration...");
+                
                 // Vérifier s'il y a déjà des articles dans la base
                 long existingNewsCount = newsService.getAllNews().size();
                 
@@ -83,11 +84,11 @@ public class SportDataSyncService {
                 } else {
                     logger.info("Articles existants trouvés ({}) - Initialisation des données non nécessaire", existingNewsCount);
                 }
-            } catch (Exception e) {
-                logger.error("Erreur lors de l'initialisation des données", e);
+            } else {
+                logger.info("Mode production - Pas d'initialisation automatique des données de démonstration");
             }
-        } else {
-            logger.info("Mode production - Pas d'initialisation automatique des données de démonstration");
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'initialisation des données", e);
         }
     }
     
@@ -180,7 +181,7 @@ public class SportDataSyncService {
         }
     }
     
-    @Scheduled(fixedRate = 3600000) // Toutes les heures
+    // @Scheduled(fixedRate = 3600000) // Toutes les heures - DÉSACTIVÉ TEMPORAIREMENT
     public void syncNews() {
         SUPPORTED_SPORTS.parallelStream().forEach(sport -> {
             try {

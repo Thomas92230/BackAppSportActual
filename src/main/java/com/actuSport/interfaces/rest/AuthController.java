@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -22,26 +23,32 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager,
                           JwtTokenUtil jwtTokenUtil,
-                          UserDetailsService userDetailsService) {
+                          UserDetailsService userDetailsService,
+                          PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody Map<String, String> authenticationRequest) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    authenticationRequest.get("username"),
-                    authenticationRequest.get("password")
-                )
-            );
-
-            final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String username = authenticationRequest.get("username");
+            String password = authenticationRequest.get("password");
+            
+            // Authentification directe via base de données
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            
+            // Vérification manuelle du mot de passe
+            if (!passwordEncoder.matches(password, userDetails.getPassword())) {
+                throw new AuthenticationException("Invalid credentials") {};
+            }
+            
             final String jwt = jwtTokenUtil.generateToken(userDetails.getUsername());
 
             Map<String, Object> response = new HashMap<>();

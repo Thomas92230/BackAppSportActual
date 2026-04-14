@@ -85,11 +85,19 @@ public class NewsService {
     
     public void updateNews(List<News> newsList) {
         newsList.forEach(news -> {
-            Optional<News> existingNews = newsRepository.findByTitle(news.getTitle());
-            
-            if (existingNews.isEmpty()) {
+            try {
+                List<News> existingNews = newsRepository.findAllByTitle(news.getTitle());
+                
+                if (existingNews.isEmpty()) {
+                    saveNews(news);
+                    logger.info("Saved new news: {}", news.getTitle());
+                } else {
+                    logger.debug("News already exists: {} (found {} duplicates)", news.getTitle(), existingNews.size());
+                }
+            } catch (Exception e) {
+                logger.error("Error checking existing news for title: {}", news.getTitle(), e);
+                // En cas d'erreur, on essaie quand même de sauvegarder
                 saveNews(news);
-                logger.info("Saved new news: {}", news.getTitle());
             }
         });
     }

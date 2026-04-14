@@ -1,8 +1,8 @@
 package com.actuSport.infrastructure.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -19,7 +19,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -28,20 +27,24 @@ import java.util.List;
 @Profile("!docker") // Ne pas appliquer cette configuration pour le profil docker
 public class SecurityConfig {
     
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final UserDetailsService userDetailsService;
+    
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                         JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+                         UserDetailsService userDetailsService) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.userDetailsService = userDetailsService;
+    }
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors().and().csrf().disable()
-            .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
@@ -55,19 +58,12 @@ public class SecurityConfig {
                 .requestMatchers("/app/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/search-interface.html").permitAll()
-                .requestMatchers("/test-articles.json").permitAll()
-                .requestMatchers("/test-images.html").permitAll()
-                .requestMatchers("/recent-article.json").permitAll()
-                .requestMatchers("/recent-simple.json").permitAll()
-                .requestMatchers("/static/**", "/public/**", "/resources/**", "/css/**", "/js/**", "/images/**").permitAll()
+                                                .requestMatchers("/static/**", "/public/**", "/resources/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/**").permitAll() // Autoriser tout en mode développement
                 .anyRequest().authenticated()
-            );
-        
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
-        http.headers().frameOptions().disable();
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
         
         return http.build();
     }
@@ -76,8 +72,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

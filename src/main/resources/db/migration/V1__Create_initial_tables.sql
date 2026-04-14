@@ -65,12 +65,12 @@ CREATE TABLE matches (
 -- Create news table
 CREATE TABLE news (
     id BIGSERIAL PRIMARY KEY,
-    title VARCHAR(500) NOT NULL,
+    title VARCHAR(1000) NOT NULL,
     content TEXT,
     summary TEXT,
     author VARCHAR(200),
     source VARCHAR(200),
-    image_url VARCHAR(500),
+    image_url VARCHAR(1000),
     article_url VARCHAR(1000),
     sport_id BIGINT,
     team_id BIGINT,
