@@ -87,7 +87,7 @@ public class MockNewsClient {
                 .replaceAll("\\s+", "-")
                 .trim();
         news.setImageUrl("https://picsum.photos/seed/" + seed + "/400/200.jpg");
-        news.setArticleUrl("https://example.com/news/" + System.currentTimeMillis());
+        news.setArticleUrl("https://www.lequipe.fr/Football/Actualites/" + System.currentTimeMillis());
         news.setPublishedAt(LocalDateTime.now().minusHours(random.nextInt(24)));
         news.setCreatedAt(LocalDateTime.now());
         

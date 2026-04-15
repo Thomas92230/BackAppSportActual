@@ -203,6 +203,138 @@ public class NewsController {
         return ResponseEntity.ok(enrichedNews);
     }
     
+    @GetMapping("/sports/recent")
+    public ResponseEntity<List<NewsResponse>> getRecentSportsNews(
+            @RequestParam(defaultValue = "30") int limit,
+            @RequestParam(defaultValue = "true") boolean enhanced) {
+        
+        logger.info("Fetching {} recent sports news articles with valid images and links", limit);
+        
+        // Récupérer les articles sportifs récents avec filtres
+        List<News> sportsNews = newsService.getRecentValidSportsNews(limit);
+        
+        if (enhanced) {
+            // Retourner des résultats enrichis avec proxy d'images et URLs d'accès
+            List<NewsResponse> enrichedNews = sportsNews.stream().map(news -> {
+                NewsResponse response = toResponse(news);
+                
+                // Ajouter l'URL pour accéder au contenu complet
+                response.setFullArticleUrl("/api/news/" + news.getId() + "/full");
+                response.setContentUrl("/api/news/" + news.getId() + "/content");
+                
+                // Ajouter l'URL du proxy pour l'image avec gestion d'erreur
+                if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
+                    try {
+                        String encodedUrl = java.net.URLEncoder.encode(news.getImageUrl(), java.nio.charset.StandardCharsets.UTF_8);
+                        response.setImageUrl("/api/news/proxy/image?url=" + encodedUrl);
+                    } catch (Exception e) {
+                        logger.warn("Error encoding image URL for news {}: {}", news.getId(), news.getImageUrl(), e);
+                        response.setImageUrl(news.getImageUrl());
+                    }
+                }
+                
+                return response;
+            }).collect(Collectors.toList());
+            
+            logger.info("Returning {} enhanced recent sports news articles", enrichedNews.size());
+            return ResponseEntity.ok(enrichedNews);
+        } else {
+            logger.info("Returning {} basic recent sports news articles", sportsNews.size());
+            return ResponseEntity.ok(sportsNews.stream().map(this::toResponse).collect(Collectors.toList()));
+        }
+    }
+    
+    @PostMapping("/sync")
+    public ResponseEntity<Map<String, Object>> syncNewsFromAPI() {
+        logger.info("Déclenchement manuel de la synchronisation des articles depuis NewsAPI");
+        
+        try {
+            // Déclencher la synchronisation pour tous les sports supportés
+            syncService.syncNews();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Synchronisation des articles déclenchée avec succès");
+            response.put("timestamp", LocalDateTime.now());
+            
+            logger.info("Synchronisation des articles terminée");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Erreur lors de la synchronisation des articles", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Erreur lors de la synchronisation: " + e.getMessage());
+            response.put("timestamp", LocalDateTime.now());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    @PostMapping("/sync-batch")
+    public ResponseEntity<Map<String, Object>> syncBatchNews() {
+        logger.info("Déclenchement manuel de la synchronisation batch optimisée");
+        
+        try {
+            // Déclencher la synchronisation batch avec les vraies API gratuites
+            syncService.syncNews();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Synchronisation batch optimisée déclenchée avec succès (20 articles par sport)");
+            response.put("timestamp", LocalDateTime.now());
+            
+            logger.info("Synchronisation batch optimisée terminée");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Erreur lors de la synchronisation batch optimisée", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Erreur lors de la synchronisation batch: " + e.getMessage());
+            response.put("timestamp", LocalDateTime.now());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    @GetMapping("/sync/smart/{sport}")
+    public ResponseEntity<Map<String, Object>> smartSync(@PathVariable String sport) {
+        logger.info("Déclenchement de la synchronisation intelligente pour le sport: {}", sport);
+        
+        try {
+            int articlesFound = syncService.syncNewsWithFallback(sport);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("sport", sport);
+            response.put("status", articlesFound > 0 ? "SUCCESS" : "FAILED");
+            response.put("count", articlesFound);
+            response.put("timestamp", LocalDateTime.now());
+            
+            if (articlesFound > 0) {
+                logger.info("Synchronisation intelligente réussie pour {}: {} articles", sport, articlesFound);
+                return ResponseEntity.ok(response);
+            } else {
+                logger.warn("Aucun article trouvé pour le sport: {}", sport);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Erreur lors de la synchronisation intelligente pour le sport: {}", sport, e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("sport", sport);
+            response.put("status", "ERROR");
+            response.put("count", 0);
+            response.put("message", "Erreur lors de la synchronisation: " + e.getMessage());
+            response.put("timestamp", LocalDateTime.now());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
     @GetMapping("/search")
     public ResponseEntity<List<NewsResponse>> searchNews(
             @RequestParam String keyword,

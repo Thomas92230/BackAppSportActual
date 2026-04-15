@@ -203,4 +203,109 @@ public class NewsService {
         logger.info("Deleting all news articles from database");
         newsRepository.deleteAll();
     }
+    
+    public List<News> getRecentValidSportsNews(int limit) {
+        List<News> allRecentNews = getRecentNews(72); // Articles des 3 derniers jours
+        
+        // Filtrer les articles qui ont une image valide et un lien valide
+        List<News> validNews = allRecentNews.stream()
+                .filter(this::hasValidImageAndLink)
+                .filter(news -> isSportsRelated(news))
+                .collect(Collectors.toList());
+        
+        // Limiter au nombre demandé et trier par date de publication
+        return validNews.stream()
+                .sorted((a, b) -> b.getPublishedAt().compareTo(a.getPublishedAt()))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+    
+    private boolean hasValidImageAndLink(News news) {
+        // Vérifier que l'article a une image valide (vraie image de NewsAPI)
+        boolean hasValidImage = news.getImageUrl() != null && 
+                               !news.getImageUrl().trim().isEmpty() &&
+                               !isExampleUrl(news.getImageUrl()) &&
+                               !isGeneratedImage(news.getImageUrl()) &&
+                               !isSubstitutionImage(news.getImageUrl());
+        
+        // Vérifier que l'article a un lien valide
+        boolean hasValidLink = news.getArticleUrl() != null && 
+                              !news.getArticleUrl().trim().isEmpty() &&
+                              !isExampleUrl(news.getArticleUrl());
+        
+        // Vérifier que l'article a un contenu et titre valides
+        boolean hasValidContent = news.getTitle() != null && 
+                                !news.getTitle().trim().isEmpty() &&
+                                news.getContent() != null && 
+                                !news.getContent().trim().isEmpty();
+        
+        return hasValidImage && hasValidLink && hasValidContent;
+    }
+    
+    private boolean isExampleUrl(String url) {
+        if (url == null) return false;
+        return url.contains("example.com") || 
+               url.contains("exemple") || 
+               url.startsWith("http://example.") ||
+               url.startsWith("https://example.") ||
+               url.contains("placeholder") ||
+               url.contains("test.") ||
+               url.contains("demo.") ||
+               url.contains("picsum.photos") ||
+               url.contains("via.placeholder.com");
+    }
+    
+    private boolean isGeneratedImage(String imageUrl) {
+        if (imageUrl == null) return false;
+        return imageUrl.contains("unsplash.com") && 
+               (imageUrl.contains("photo-1571019613454-1cb2f99b2d8b") ||
+                imageUrl.contains("photo-1595435934249-5e7e2a0b5d98") ||
+                imageUrl.contains("photo-1517466787929-bc90951d0974") ||
+                imageUrl.contains("photo-1612872087720-bb876e2e67d1") ||
+                imageUrl.contains("photo-1541252260730-0412e8e2108e") ||
+                imageUrl.contains("photo-1506197600528-5b297d02b8db") ||
+                imageUrl.contains("photo-1461896836934-ffe607ba8211") ||
+                imageUrl.contains("photo-1571902943202-507ec2618e8f") ||
+                imageUrl.contains("photo-1540555700478-4be2892cef28")) ||
+               imageUrl.contains("via.placeholder.com");
+    }
+    
+    private boolean isSubstitutionImage(String imageUrl) {
+        if (imageUrl == null) return false;
+        return imageUrl.contains("picsum.photos") ||
+               imageUrl.contains("placeholder.com") ||
+               imageUrl.contains("example.com") ||
+               (imageUrl.contains("seed/") && imageUrl.contains("picsum"));
+    }
+    
+    private boolean isSportsRelated(News news) {
+        if (news == null || (news.getTitle() == null && news.getContent() == null && news.getSummary() == null)) {
+            return false;
+        }
+        
+        String searchText = "";
+        if (news.getTitle() != null) searchText += news.getTitle().toLowerCase() + " ";
+        if (news.getContent() != null) searchText += news.getContent().toLowerCase() + " ";
+        if (news.getSummary() != null) searchText += news.getSummary().toLowerCase() + " ";
+        
+        // Liste des mots-clés sportifs
+        String[] sportsKeywords = {
+            "football", "soccer", "basketball", "tennis", "hockey", "rugby", 
+            "cycling", "cyclisme", "f1", "formula 1", "judo", "swimming", "natation",
+            "athlétisme", "athletics", "golf", "volley", "boxe", "combat", "sport",
+            "match", "équipe", "team", "player", "joueur", "coach", "entraîneur",
+            "champion", "victoire", "victory", "défaite", "defeat", "score", "but",
+            "goal", "tournament", "tournoi", "league", "ligue", "cup", "coupe",
+            "olympique", "olympic", "world cup", "coupe du monde", "euro", "champions league",
+            "nba", "nfl", "mlb", "nhl", "premier league", "laliga", "serie a", "bundesliga"
+        };
+        
+        for (String keyword : sportsKeywords) {
+            if (searchText.contains(keyword.toLowerCase())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }

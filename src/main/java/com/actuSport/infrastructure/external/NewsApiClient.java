@@ -141,23 +141,15 @@ public class NewsApiClient {
             String keywords = SPORT_KEYWORDS.getOrDefault(sport, sport);
             List<News> allNews = new ArrayList<>();
             
-            // Stratégie 1: Recherche générale avec mots-clés sportifs
-            List<News> generalNews = fetchNewsWithKeywords(keywords + " AND (sports OR sport)", sport, 50);
-            allNews.addAll(generalNews);
-            
-            // Stratégie 2: Recherche spécifique au sport sans filtre "sports"
-            if (!keywords.contains("AND")) {
-                List<News> specificNews = fetchNewsWithKeywords(keywords, sport, 30);
-                allNews.addAll(specificNews);
+            // Vérifier d'abord si nous sommes en rate limiting
+            if (isRateLimited()) {
+                logger.warn("NewsAPI rate limiting detected, skipping sync for sport: {}", sport);
+                return List.of();
             }
             
-            // Stratégie 3: Recherche en anglais pour plus d'articles
-            List<News> englishNews = fetchNewsInEnglish(keywords, sport, 30);
-            allNews.addAll(englishNews);
-            
-            // Stratégie 4: Recherche par sources sportives populaires
-            List<News> sourceNews = fetchFromSportSources(sport, 20);
-            allNews.addAll(sourceNews);
+            // Stratégie optimisée: Un seul appel API par sport pour éviter le rate limiting
+            List<News> sportsNews = fetchNewsWithKeywords(keywords + " AND (sports OR sport)", sport, 100);
+            allNews.addAll(sportsNews);
             
             // Éliminer les doublons basés sur le titre
             List<News> uniqueNews = removeDuplicates(allNews);
@@ -171,6 +163,32 @@ public class NewsApiClient {
         }
         
         return List.of();
+    }
+    
+    private boolean isRateLimited() {
+        try {
+            // Test simple pour vérifier si l'API est en rate limiting
+            String testUrl = UriComponentsBuilder.fromHttpUrl(baseUrl + "/everything")
+                    .queryParam("q", "test")
+                    .queryParam("pageSize", "1")
+                    .queryParam("apiKey", apiKey)
+                    .build()
+                    .toUriString();
+            
+            String response = restTemplate.getForObject(testUrl, String.class);
+            if (response != null && response.contains("rateLimited")) {
+                logger.warn("NewsAPI rate limiting detected");
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            logger.warn("Error checking NewsAPI rate limit status: {}", e.getMessage());
+            // Si l'erreur mentionne "too many requests", c'est du rate limiting
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("too many requests")) {
+                return true;
+            }
+            return false;
+        }
     }
     
     private List<News> fetchNewsWithKeywords(String keywords, String sport, int pageSize) {
@@ -266,18 +284,18 @@ public class NewsApiClient {
         news.setAuthor(article.getAuthor());
         news.setSource(article.getSource() != null ? article.getSource().getName() : "Unknown");
         
-        // Gérer les images : utiliser l'image de NewsAPI ou une image par défaut
+        // Utiliser uniquement les vraies images de NewsAPI
         String imageUrl = article.getUrlToImage();
-        logger.info("Processing article: {} - Original imageUrl: {}", article.getTitle(), imageUrl);
+        logger.info("Processing article: {} - NewsAPI imageUrl: {}", article.getTitle(), imageUrl);
         
         if (imageUrl == null || imageUrl.trim().isEmpty()) {
-            // Générer une image par défaut basée sur le sport
-            imageUrl = generateDefaultImage(sport, article.getTitle());
-            logger.info("Generated default image: {}", imageUrl);
+            // Si pas d'image, ne pas créer d'image de substitution
+            logger.warn("No image provided by NewsAPI for article: {} - skipping", article.getTitle());
+            news.setImageUrl(null); // Garder null si pas d'image
         } else {
             logger.info("Using NewsAPI image: {}", imageUrl);
+            news.setImageUrl(imageUrl);
         }
-        news.setImageUrl(imageUrl);
         
         news.setArticleUrl(article.getUrl());
         news.setPublishedAt(parsePublishedAt(article.getPublishedAt()));
@@ -290,18 +308,7 @@ public class NewsApiClient {
         return news;
     }
     
-    private String generateDefaultImage(String sport, String title) {
-        try {
-            // Utiliser un service d'images par défaut avec le titre et le sport
-            String encodedTitle = title.replaceAll(" ", "+").substring(0, Math.min(50, title.length()));
-            String encodedSport = sport.replaceAll(" ", "+");
-            return String.format("https://via.placeholder.com/400x200/4F46E5/FFFFFF?text=%s-%s", encodedSport, encodedTitle);
-        } catch (Exception e) {
-            logger.warn("Error generating default image for sport: {}", sport, e);
-            return "https://via.placeholder.com/400x200/4F46E5/FFFFFF?text=Sport+News";
-        }
-    }
-    
+        
     private LocalDateTime parsePublishedAt(String publishedAt) {
         try {
             // NewsAPI retourne les dates au format ISO 8601: "2024-04-07T10:30:00Z"

@@ -17,8 +17,7 @@ import java.util.Optional;
 @Repository
 public interface NewsRepository extends JpaRepository<News, Long> {
     
-    @Query("SELECT n FROM News n WHERE n.title = :title LIMIT 1")
-Optional<News> findByTitle(@Param("title") String title);
+    Optional<News> findFirstByTitle(String title);
     
     List<News> findAllByTitle(String title);
     
